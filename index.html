@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./css/bootstrap.min.css">
+  <title>grid</title>
+</head>
+<body>
+  <div class="container-fluid" id="parinteDiv">
+    <div class="mb-1">
+      <label for="searchInputBox" class="form-label">Caută</label>
+      <input type="text" name="" id="searchInputBox" class="form-control" placeholder="" aria-describedby="helpId">
+      <small id="helpId" class="text-muted">coduri postale</small>
+    </div>
+    <div class="container-fluid vw-75 vh-91 overflow-y-auto" id="scrollDiv">
+      <div class="container-fluid" id="detailDiv">
+        
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/jquery-3.7.1.min.js"></script>
+  <script src="./js/bootstrap.bundle.min.js"></script>
+  <script>
+    let json = {};
+    let jsonFiltered ={};
+    let selectedRow = 0;
+    
+    
+    let read_ed = function read(url) {
+      $.getJSON(url)
+      .done(function(data){
+        json = data;
+        filtrare();
+        jsonInTags();
+        return true;
+      })
+      .fail(function(err){
+        console.log(err.status + ' ' + err.statusText);
+        return false;
+      });
+    }
+
+    function filtrare () {
+      let paramSearch = $('#searchInputBox').val().split(',');
+
+      if($('#searchInputBox').val() != ''){
+        switch (paramSearch.length) {
+          case 1:
+            jsonFiltered = json.filter(
+              element =>  
+              element.judet.match(paramSearch[0].trim()) ||
+              element.localitate.match(paramSearch[0].trim()) ||
+              element.denumire.match(paramSearch[0].trim())
+            );
+            break;
+          case 2:
+            jsonFiltered = json.filter(
+              element =>  
+              element.judet.match(paramSearch[0].trim()) &&
+              element.localitate.match(paramSearch[1].trim())
+            );
+            break;
+          case 3:
+          jsonFiltered = json.filter(
+              element =>  
+              element.judet.match(paramSearch[0].trim()) &&
+              element.localitate.match(paramSearch[1].trim()) &&
+              element.denumire.match(paramSearch[2].trim())
+            );
+            break;
+        }
+        //console.log(jsonFiltered);
+      }else{
+        jsonFiltered = json;
+      }
+    }
+    
+    function jsonInTags(){
+      //container cadru pt scroll
+      let scrollNode = document.getElementById('scrollDiv');
+      //cntScroll.className = 'container-fluid';
+      scrollNode.style.maxHeight='81vh';
+      scrollNode.style.overflowY='auto';
+      //--
+      //--
+      let node = document.getElementById('detailDiv');
+      Array.from(node.children).forEach(c => c.remove())
+      //--
+
+      // tabela 
+      let tabela = document.createElement('table');
+      let corpTabel = document.createElement('tbody');
+      tabela.id = 'detailTable';
+      tabela.className = 'table table-striped table-hover';
+      //--
+
+      //parcurg json
+      let i=0;
+      jsonFiltered.forEach(element => {
+        // row
+        let row = document.createElement('tr');
+        row.id = `row${i}`;
+        row.style.cursor = 'pointer';
+        row.setAttribute('onclick',`row_click(${i})`);
+        if(i === 0){
+          row.className='table-primary';
+        }
+        //--
+
+        //parcurg keys
+        let keys = Object.keys(element);
+        keys.forEach(key => {
+          //creez td-uri
+          let cell = document.createElement('td');
+          cell.innerText  = element[key];
+          if(key.substring(0,2)=='id'){
+            cell.style.display ='none';
+          }
+          row.appendChild(cell);
+          //--
+        });
+        //--
+        corpTabel.appendChild(row);
+        i++;
+      });
+      tabela.appendChild(corpTabel);
+      let divDetail = document.getElementById('detailDiv');
+      divDetail.appendChild(tabela);
+      return true;
+    }
+
+    $('#searchInputBox').on('keyup', function(e){
+      if(e.key == 'Enter'){
+        filtrare();
+        jsonInTags();
+      }
+    });
+
+    $(document).ready(function(){
+      $('#searchInputBox').val("Neamt, Piatra");
+      read_ed('codpostal.json');
+    });
+    
+    function row_click(i) {
+      $('tr').removeClass('table-primary');
+      $(`#row${i}`).addClass('table-primary');
+      selectedRow = i;
+      console.log(selectedRow);
+    }
+  </script>
+
+</body>
+</html>
