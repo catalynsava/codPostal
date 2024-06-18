@@ -1,1 +1,2 @@
-simple grid
+cautare coduri postal
+virgula e separator
